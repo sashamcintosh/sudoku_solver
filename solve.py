@@ -38,11 +38,13 @@ def process_img(img_name, model, k, DEMO):
 	approx = cv2.approxPolyDP(contour,0.02*peri,True)
 	#print approx
 
-	cv2.drawContours(img,[approx],-1,(0,255,0),3)
+	img1 = img.copy()
+	cv2.drawContours(img1,[approx],-1,(0,255,0),3)
 	
-	if DEMO: show_img('Boundary of Sudoku', img)
+	if DEMO: show_img('Boundary of Sudoku', img1)
 
-	approx = rectify(approx)
+	approx = order_corners(approx)
+	corners = approx
 	h = np.array([ [0,0],[179,0],[179,179],[0,179] ],np.float32)
 	#h = np.array([ [0,0],[145*9,0],[145*9,128*9],[0,128*9] ],np.float32)
 
@@ -51,6 +53,10 @@ def process_img(img_name, model, k, DEMO):
 	warp_thresh = cv2.warpPerspective(thresh,retval,(180,180))#(145*9,128*9)) #,(180,180))
 	
 	if DEMO: show_img('Perspective Warp',warp_thresh)
+
+	h = np.array([ [0,0],[539,0],[539,539],[0,539] ],np.float32)
+	retval = cv2.getPerspectiveTransform(approx,h)
+	warp_orig = cv2.warpPerspective(img.copy(),retval,(540,540))#(145*9,128*9)) #,(180,180))
 
 	# Now we split the image to 81 cells, each 20x20 size
 	cells = [np.hsplit(row,9) for row in np.vsplit(warp,9)]
@@ -99,10 +105,10 @@ def process_img(img_name, model, k, DEMO):
 			#show_img('puzzle', p_thresh[i,j])
 
 	#labels = test_number(model, p_new.reshape(-1,400).astype(np.float32), k)
-	return labels
+	return warp_orig, corners, labels
 	#show_img('Puzzle', warp)
 
-def rectify(h):
+def order_corners(h):
 	h = h.reshape((4,2))
 	hnew = np.zeros((4,2),dtype = np.float32)
 
@@ -118,10 +124,10 @@ def rectify(h):
 
 def remove_edges(x):
 	rows, cols = x.shape
-	x[:3,:] = 0
-	x[:,:3] = 0
-	x[:,cols-3:] = 0
-	x[rows-3:,:] = 0
+	x[:2,:] = 0
+	x[:,:2] = 0
+	x[:,cols-2:] = 0
+	x[rows-2:,:] = 0
 
 	return x
 
@@ -129,17 +135,43 @@ def show_img(title, img):
 	cv2.imshow(title,img)
 	cv2.waitKey(0)
 
+def draw_solution(img, corners, puzzle, solution):
+	#print corners
+	#w = corners[1][0] - corners[0][0]
+	#h = corners[3][1] - corners[0][1]
+	#print puzzle
+	#print solution
+	for i in range(9):
+		for j in range(9):
+			if puzzle[i, j] == 0:
+				num = str(solution[i,j])
+				org = (j*60+15, (i+1)*60-10)
+				#print org
+				cv2.putText(img, num, org, cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+				#show_img('poop', img)
+
 if __name__ == '__main__':
 	img_name = sys.argv[1]
 
 	if len(sys.argv) == 2: # Expect exactly one argument: the image
 		DEMO = True
-		labels = process_img(img_name,'knn_typed.npz', 1, DEMO)
-		puzzle = ''.join(map(str, PUZZLES[img_name]))
-		print puzzle
-		print len(puzzle)
-		solution = solver.sudoku(puzzle)
-		print solution
+		img, corners, labels = process_img(img_name,'knn_typed.npz', 1, DEMO)
+
+		ext_puzzle = solver.stringToArray(''.join(map(str, labels)))
+		print 'Extracted Sudoku:\n{}'.format(ext_puzzle)
+		puzzle = solver.stringToArray(''.join(map(str, PUZZLES[img_name])))
+		print 'Actual Sudoku:\n{}'.format(puzzle)
+
+		matches = np.array(PUZZLES[img_name])==np.array(labels)
+		correct = np.count_nonzero(matches)
+		accuracy = correct*100.0/len(labels)
+		print 'Digit Recognition Accuracy: {}'.format(accuracy)
+
+		solution = solver.sudoku(puzzle.copy())
+		print 'Solution:\n{}'.format(solution)
+
+		draw_solution(img, corners, puzzle, solution)
+		show_img('Solution', img)
 
 	else:
 		for k in range(1,21):
