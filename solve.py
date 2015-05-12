@@ -3,14 +3,21 @@ import numpy as np
 import sys
 from number_ocr import test_number
 
+MIN_AREA = 300
+
 def process_img(img_name):
 	img =  cv2.imread(img_name)
 	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
 	gray = cv2.GaussianBlur(gray,(5,5),0)
-	thresh = cv2.adaptiveThreshold(gray,255,1,1,11,2)
 
-	contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	show_img('poop',gray)
+	thresh = cv2.adaptiveThreshold(gray,255,1,1,11,2)
+	thresh
+	show_img('poop', thresh)
+	contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+	show_img('after_contours', thresh)
+
 
 	max_area = 0
 	contour = None
@@ -30,13 +37,14 @@ def process_img(img_name):
 	# approx is the 4 corners of the puzzle
 	approx = cv2.approxPolyDP(contour,0.02*peri,True)
 
-	cv2.drawContours(img,[approx],-1,(0,255,0),3)
+	cv2.drawContours(thresh,[approx],-1,(0,255,0),3)
+	show_img('poop', thresh)
 
 	approx = rectify(approx)
 	h = np.array([ [0,0],[179,0],[179,179],[0,179] ],np.float32)
 
 	retval = cv2.getPerspectiveTransform(approx,h)
-	warp = cv2.warpPerspective(gray,retval,(180,180))
+	warp = cv2.warpPerspective(thresh,retval,(180,180))
 
 	# Now we split the image to 81 cells, each 20x20 size
 	cells = [np.hsplit(row,9) for row in np.vsplit(warp,9)]
@@ -46,9 +54,19 @@ def process_img(img_name):
 
 	for i in range(9):
 		for j in range(9):
-			show_img('puzzle', x[i,j])
+			x[i,j] = remove_edges(x[i,j])
 			test = x[i,j].reshape(-1,400).astype(np.float32) # Size = (2500,400)
-			test_number(test)
+			print x[i,j]
+			area = sum(sum(x[i,j]))
+			print 'Area: {}'.format(area)
+			if area < MIN_AREA:
+				label = [['BLANK']]
+			else:
+				label = test_number(test)
+
+			print 'Label: {}'.format(label)
+			show_img('puzzle', x[i,j])
+
 
 	show_img('Puzzle', warp)
 
@@ -65,6 +83,15 @@ def rectify(h):
 	hnew[3] = h[np.argmax(diff)]
 
 	return hnew
+
+def remove_edges(x):
+	rows, cols = x.shape
+	x[:3,:] = 0
+	x[:,:3] = 0
+	x[:,cols-4:] = 0
+	x[rows-4:,:] = 0
+
+	return x
 
 def show_img(title, img):
 	cv2.imshow(title,img)
