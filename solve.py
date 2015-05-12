@@ -3,6 +3,8 @@ import numpy as np
 import sys
 from number_ocr import test_number
 from solutions import PUZZLES
+import sudoku_solver as solver
+
 
 MIN_AREA = 500
 
@@ -133,7 +135,12 @@ if __name__ == '__main__':
 	if len(sys.argv) == 2: # Expect exactly one argument: the image
 		DEMO = True
 		labels = process_img(img_name,'knn_typed.npz', 1, DEMO)
-		puzzle = ''.join(map(str, labels))
+		puzzle = ''.join(map(str, PUZZLES[img_name]))
+		print puzzle
+		print len(puzzle)
+		solution = solver.sudoku(puzzle)
+		print solution
+
 	else:
 		for k in range(1,21):
 			labels = process_img(img_name,'knn_typed.npz', k, False)
