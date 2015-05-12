@@ -2,22 +2,22 @@ import cv2
 import numpy as np
 import sys
 from number_ocr import test_number
+from solutions import PUZZLES
+import sudoku_solver as solver
 
-MIN_AREA = 300
 
-def process_img(img_name):
+MIN_AREA = 500
+
+def process_img(img_name, model, k, DEMO):
 	img =  cv2.imread(img_name)
+	if DEMO: show_img('Original Image',img)
 	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-
 	gray = cv2.GaussianBlur(gray,(5,5),0)
-
-	show_img('poop',gray)
+	if DEMO: show_img('Grayscale with Gaussian Blur',gray)
 	thresh = cv2.adaptiveThreshold(gray,255,1,1,11,2)
-	thresh
-	show_img('poop', thresh)
+	if DEMO: show_img('Adaptive Thresholding', thresh)
 	contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-	show_img('after_contours', thresh)
-
+	#show_img('after_contours', thresh)
 
 	max_area = 0
 	contour = None
@@ -36,39 +36,71 @@ def process_img(img_name):
 
 	# approx is the 4 corners of the puzzle
 	approx = cv2.approxPolyDP(contour,0.02*peri,True)
+	#print approx
 
-	cv2.drawContours(thresh,[approx],-1,(0,255,0),3)
-	show_img('poop', thresh)
+	cv2.drawContours(img,[approx],-1,(0,255,0),3)
+	
+	if DEMO: show_img('Boundary of Sudoku', img)
 
 	approx = rectify(approx)
 	h = np.array([ [0,0],[179,0],[179,179],[0,179] ],np.float32)
+	#h = np.array([ [0,0],[145*9,0],[145*9,128*9],[0,128*9] ],np.float32)
 
 	retval = cv2.getPerspectiveTransform(approx,h)
-	warp = cv2.warpPerspective(thresh,retval,(180,180))
+	warp = cv2.warpPerspective(gray,retval,(180,180))#(145*9,128*9)) #,(180,180))
+	warp_thresh = cv2.warpPerspective(thresh,retval,(180,180))#(145*9,128*9)) #,(180,180))
+	
+	if DEMO: show_img('Perspective Warp',warp_thresh)
 
 	# Now we split the image to 81 cells, each 20x20 size
 	cells = [np.hsplit(row,9) for row in np.vsplit(warp,9)]
+	cells_thresh = [np.hsplit(row,9) for row in np.vsplit(warp_thresh,9)]
 
 	# Make it into a Numpy array. It size will be (50,100,20,20)
-	x = np.array(cells)
+	p = np.array(cells)
+	p_thresh = np.array(cells_thresh)
+	p_new = np.zeros([9,9,20,20])
+	labels = []
 
 	for i in range(9):
 		for j in range(9):
-			x[i,j] = remove_edges(x[i,j])
-			test = x[i,j].reshape(-1,400).astype(np.float32) # Size = (2500,400)
-			print x[i,j]
-			area = sum(sum(x[i,j]))
-			print 'Area: {}'.format(area)
-			if area < MIN_AREA:
-				label = [['BLANK']]
+			#p_thresh[i,j] = remove_edges(p_thresh[i,j])
+			contours, hierarchy = cv2.findContours(p_thresh[i,j].copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+			area = sum(sum(remove_edges(p_thresh[i,j].copy())))
+
+			if (len(contours) == 0) or area < MIN_AREA:
+				label = 0
+				warp_test = p_thresh[i,j]
+				p_new[i,j] = warp_test
 			else:
-				label = test_number(test)
+				contour = contours[0]
+				if cv2.contourArea(contour) < 5.0:
+					approx = np.array([ [0,0],[19,0],[19,19],[0,19] ],np.float32)
 
-			print 'Label: {}'.format(label)
-			show_img('puzzle', x[i,j])
+				else:
+					x,y,w,h = cv2.boundingRect(contour)
+					approx = np.array([ [y,x],[y+h,x],[y+h,x+w],[y,x+w] ],np.float32)
 
+				new_corners = np.array([ [0,0],[19,0],[19,19],[0,19] ],np.float32)
 
-	show_img('Puzzle', warp)
+				retval = cv2.getPerspectiveTransform(approx,new_corners)
+				warp_test = cv2.warpPerspective(p_thresh[i,j],retval,(20,20))#(145*9,128*9)) #,(180,180))
+				
+				#p_new[i,j] = warp_test
+				test = p_thresh[i,j].reshape(-1,400).astype(np.float32)
+
+				label = test_number(model,test, k).tolist()[0]
+				label = int(label[0])
+
+			labels.append(label)
+			#print 'Area: {}'.format(area)
+			#print 'Label: {}'.format(label)
+			#show_img('puzzle', p_thresh[i,j])
+
+	#labels = test_number(model, p_new.reshape(-1,400).astype(np.float32), k)
+	return labels
+	#show_img('Puzzle', warp)
 
 def rectify(h):
 	h = h.reshape((4,2))
@@ -88,8 +120,8 @@ def remove_edges(x):
 	rows, cols = x.shape
 	x[:3,:] = 0
 	x[:,:3] = 0
-	x[:,cols-4:] = 0
-	x[rows-4:,:] = 0
+	x[:,cols-3:] = 0
+	x[rows-3:,:] = 0
 
 	return x
 
@@ -98,11 +130,24 @@ def show_img(title, img):
 	cv2.waitKey(0)
 
 if __name__ == '__main__':
-	if len(sys.argv) != 2: # Expect exactly one argument: the port number
-		#usage()
-		sys.exit(2)
-
 	img_name = sys.argv[1]
-	process_img(img_name)
+
+	if len(sys.argv) == 2: # Expect exactly one argument: the image
+		DEMO = True
+		labels = process_img(img_name,'knn_typed.npz', 1, DEMO)
+		puzzle = ''.join(map(str, PUZZLES[img_name]))
+		print puzzle
+		print len(puzzle)
+		solution = solver.sudoku(puzzle)
+		print solution
+
+	else:
+		for k in range(1,21):
+			labels = process_img(img_name,'knn_typed.npz', k, False)
+			#print labels
+			matches = np.array(PUZZLES[img_name])==np.array(labels)
+			correct = np.count_nonzero(matches)
+			accuracy = correct*100.0/len(labels)
+			print '{}: {}'.format(k, accuracy)
 
 
