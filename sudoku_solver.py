@@ -6,7 +6,7 @@
 # Visual Interfaces to Computers
 # Final Project
 # 
-# sudoku_solver2.py
+# sudoku_solver.py
 # 
 #################################
 
@@ -34,15 +34,20 @@ def sudoku(X):
 	# Recursive backtracking. 
 	if np.any(X==0):
 		Y = X[:,:]
-		z = np.transpose( np.where(X==0) )[0]   # The first unfilled cell.
+
+        # The first unfilled cell.
+		z = np.transpose( np.where(X==0) )[0]   
 		z0, z1 = z[0], z[1]
-		for r in C[z[0]][z[1]]:			# Iterate over candidates.
+
+        # Iterate over candidates.
+		for r in C[z[0]][z[1]]:			
 			X = Y[:,:]
-
-			X[z0][z1] = r 				# Insert a tentative value.
-
-			X = sudoku(X.copy())		# Recursive call.
-			if np.any(X>0) and not np.any(X==0): 	# Found a solution.
+            # Insert a tentative value.
+			X[z0][z1] = r 				
+            # Recursive call.
+			X = sudoku(X.copy())
+            # Found a solution.		
+			if np.any(X>0) and not np.any(X==0): 	
 				return X
 
 	return X
@@ -51,6 +56,7 @@ def sudoku(X):
 def tri(k):
 	return int( 3*math.floor(k/3) )
 
+# determines the candidate numbers for each 
 def candidates(X):
 	C = np.empty((9,9))
 	C.fill(None)
@@ -92,6 +98,7 @@ def candidates(X):
 
 	return C, s, e
 
+# converts long string input into numpy array
 def stringToArray(puzzle):
 	out = np.zeros((9,9))
 	puzzle = list(puzzle)
@@ -102,19 +109,17 @@ def stringToArray(puzzle):
 
 	return out.astype(int)
 
-def main():
-	puzzle = '000060030240000100007002008001400309700319002306007500500700800002000013070020000'
-	#puzzle = '020030040600000003004000500000806000800010006000705000007000600400000008030040020'
-	puzzle = stringToArray(puzzle)
+# provides example of medium and very difficult puzzle
+def example():
+    puzzle = '000060030240000100007002008001400309700319002306007500500700800002000013070020000'
+    #puzzle = '020030040600000003004000500000806000800010006000705000007000600400000008030040020'
+    puzzle = stringToArray(puzzle)
 
-	print puzzle
-	print sudoku(puzzle)
-
-
-main()
-
-
-
+    print 'Example Puzzle:'
+    print puzzle
+    print
+    print 'Solved:'
+    print sudoku(puzzle)
 
 
 
