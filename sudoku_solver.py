@@ -10,14 +10,14 @@
 # 
 #################################
 
-# based on a sdoku solver found at
+# based on a MATLAB sudoku solver, found at
 # http://www.mathworks.com/company/newsletters/articles/solving-sudoku-with-matlab.html
 
 import math
 import numpy as np
+import time
 
 def sudoku(X):
-	# Fill in all "singletons". 
 	# C is a cell array of candidate vectors
 	# s is the first cell, if any, with one candidate. 
 	# e is the first cell, if any, with no candidates. 
@@ -107,12 +107,12 @@ def stringToArray(puzzle):
 		for j in range(0,9):
 			out[i,j] = puzzle.pop(0)
 
-	return out.astype(int)
+	return out.astype(int)    
 
-# provides example of medium and very difficult puzzle
+# provides examples of 2 puzzles
 def example():
     puzzle = '000060030240000100007002008001400309700319002306007500500700800002000013070020000'
-    #puzzle = '020030040600000003004000500000806000800010006000705000007000600400000008030040020'
+    puzzle = '507314000240009004164000093805400009000971000900005307280000645400800000000546902'
     puzzle = stringToArray(puzzle)
 
     print 'Example Puzzle:'
@@ -121,8 +121,41 @@ def example():
     print 'Solved:'
     print sudoku(puzzle)
 
+# test the performance of the algorithm
+def testSpeed(filename):
+    infile = open(filename, 'r')
 
+    test_set = []
+    for line in infile:
+        test_set.append( line.replace('.', '0') )
+    infile.close()
 
+    count = 1
+    for puzzle in test_set:
+        start = time.time()
+        sudoku( stringToArray(puzzle) )
+        end = time.time()
+
+        print 'Puzzle:', count, 'Time:', end - start, 'seconds'
+        count +=1
+
+def testAccuracy(filename):
+    infile = open(filename, 'r')
+
+    test_set = []
+    for line in infile:
+        test_set.append( line.replace('.', '0') )
+    infile.close()
+
+    count = 1
+    for puzzle in test_set:
+
+        print 'Puzzle:', count
+        S = sudoku( stringToArray(puzzle) )
+        print S
+        print 'Sum:', np.sum( np.sum(S) )
+
+        count +=1
 
 
 
