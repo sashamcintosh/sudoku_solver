@@ -14,23 +14,34 @@ def train():
 	print x
 
 	# Now we prepare train_data and test_data.
-	train = x[:,:50].reshape(-1,400).astype(np.float32) # Size = (2500,400)
-	test = x[0,0].reshape(-1,400).astype(np.float32) # Size = (2500,400)
+	train = x[:,:].reshape(-1,400).astype(np.float32) # Size = (5000,400)
+	#test = x[0,:50].reshape(-1,400).astype(np.float32) # Size = (2500,400)
 
 	# Create labels for train and test data
 	k = np.arange(10)
-	train_labels = np.repeat(k,250)[:,np.newaxis]
-	test_labels = train_labels.copy()
-
-	cv2.imshow('img',img)
-	cv2.waitKey(0)	
-
-	test_number(test)
+	train_labels = np.repeat(k,500)[:,np.newaxis]
 
 	'''
+	for i in range(50):
+		for j in range(100):
+			test = x[i,j]
+			print test
+			cv2.imshow('img',test)
+			cv2.waitKey(0)	
+	'''
+	#test_labels = train_labels.copy()
+
+	#cv2.imshow('img',img)
+	#cv2.waitKey(0)	
+
+	#test_number(test)
+
 	# Initiate kNN, train the data, then test it with test data for k=1
 	knn = cv2.KNearest()
 	knn.train(train,train_labels)
+
+	file_name = 'knn_data.npz'
+	'''
 	ret,result,neighbours,dist = knn.find_nearest(test,k=5)
 
 	# Now we check the accuracy of classification
@@ -39,10 +50,12 @@ def train():
 	correct = np.count_nonzero(matches)
 	accuracy = correct*100.0/result.size
 	print accuracy
-
-	# save the data
-	np.savez('knn_data.npz',train=train, train_labels=train_labels)
 	'''
+	# save the data
+	np.savez(file_name,train=train, train_labels=train_labels)
+
+	print 'Model saved in {}'.format(file_name)
+	
 
 def test_number(test_data):
 	# Now load the data
@@ -53,8 +66,8 @@ def test_number(test_data):
 
 		knn = cv2.KNearest()
 		knn.train(train,train_labels)
-		ret,result,neighbours,dist = knn.find_nearest(test_data,k=5)
-		print result
+		ret,result,neighbours,dist = knn.find_nearest(test_data,k=2)
+		return result
 
 
 if __name__ == '__main__':
