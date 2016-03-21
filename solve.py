@@ -1,3 +1,15 @@
+#################################
+# 
+# Sasha McIntosh - sam2270
+# Michael Saltzman - mjs2287
+# 
+# Visual Interfaces to Computers
+# Final Project
+# 
+# solve.py
+# 
+#################################
+
 import cv2
 import numpy as np
 import sys
