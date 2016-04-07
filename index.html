@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Sudoku solver by sashamcintosh</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Sudoku solver</h1>
+        <p>Final Project for Visual interface to Computers</p>
+
+        <p class="view"><a href="https://github.com/sashamcintosh/sudoku_solver">View the Project on GitHub <small>sashamcintosh/sudoku_solver</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/sashamcintosh/sudoku_solver/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/sashamcintosh/sudoku_solver/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/sashamcintosh/sudoku_solver">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a id="vision-based-sudoku-solver" class="anchor" href="#vision-based-sudoku-solver" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Vision Based Sudoku Solver</h1>
+
+<p>Created by <a href="@sashamcintosh">Sasha McIntosh</a> &amp; Michael Saltzman
+For a full write up of this project, see <a href="./documentation/documentation.md">documentation/documentation.md</a></p>
+
+<p>Running from the command line example:</p>
+
+<pre><code>$ cd sudoku_solver
+$ python solve.py puzzles/img1.py
+</code></pre>
+
+<p>Hit enter to step through the program's image processing. The program writes to the console the following 2d arrays:
+1. The Extracted Sudoku: Using digit recognition based on a training set, what the percived values for each cell of the sudoku.
+ex:</p>
+
+<pre><code>Extracted Sudoku:
+[[0 2 3 1 1 3 6 0 0]
+ [0 0 5 5 1 1 0 4 0]
+ [1 0 0 0 1 2 0 0 7]
+ [0 1 0 0 1 0 7 0 0]
+ [7 0 1 0 4 0 5 0 7]
+ [0 0 1 0 7 0 0 8 0]
+ [0 0 0 4 0 0 0 0 4]
+ [0 1 0 0 0 7 7 0 0]
+ [0 0 7 1 0 0 5 1 0]]
+</code></pre>
+
+<ol>
+<li>The Actual Sudoku: Taken from the <a href="solutions.py">solutions.py</a> file, the actual values at each cell of the sudoku. The accuracy of the digit recognition is based on the comparison of these two matrices.
+ex:</li>
+</ol>
+
+<pre><code>Actual Sudoku:
+[[0 1 5 0 0 3 8 0 0]
+ [0 0 3 5 0 0 0 4 0]
+ [6 0 0 0 0 2 0 0 7]
+ [0 4 0 0 6 0 7 0 0]
+ [2 0 8 0 4 0 5 0 3]
+ [0 0 6 0 3 0 0 9 0]
+ [9 0 0 3 0 0 0 0 2]
+ [0 8 0 0 0 9 6 0 0]
+ [0 0 1 6 0 0 4 7 0]]
+Digit Recognition Accuracy: 65.4320987654
+</code></pre>
+
+<ol>
+<li>The Solution: The program's solution of the sudoku based on the "actual sudoku" matrix.
+ex:</li>
+</ol>
+
+<pre><code>Solution:
+[[7 1 5 4 9 3 8 2 6]
+ [8 2 3 5 7 6 9 4 1]
+ [6 9 4 1 8 2 3 5 7]
+ [3 4 9 2 6 5 7 1 8]
+ [2 7 8 9 4 1 5 6 3]
+ [1 5 6 8 3 7 2 9 4]
+ [9 6 7 3 5 4 1 8 2]
+ [4 8 2 7 1 9 6 3 5]
+ [5 3 1 6 2 8 4 7 9]]
+</code></pre>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/sashamcintosh">sashamcintosh</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
